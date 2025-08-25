@@ -6,7 +6,7 @@ spec:
   config:
     env:
     - name: ARGOCD_CLUSTER_CONFIG_NAMESPACES
-      value: argocd-cp, openshift-gitops
+      value: argocd, openshift-gitops
     - name: DISABLE_DEFAULT_ARGOCD_INSTANCE
       value: "true"
     - name: DISABLE_DEFAULT_ARGOCD_CONSOLELINK

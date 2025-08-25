@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   annotations:
     openshift.io/display-name: Argo CD Control Plane
-  name: argocd-cp
+  name: argocd

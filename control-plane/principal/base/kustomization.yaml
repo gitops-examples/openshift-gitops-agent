@@ -1,4 +1,4 @@
-namespace: argocd-cp
+namespace: argocd
 
 resources:
   - namespace.yaml

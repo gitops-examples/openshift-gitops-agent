@@ -10,6 +10,7 @@ spec:
       enabled: true
       image: 'quay.io/argoprojlabs/argocd-agent:v0.3.2'
       jwtAllowGenerate: true
+      auth: mtls:CN=([^,]+)
   applicationSet:
     enabled: false
   controller:
