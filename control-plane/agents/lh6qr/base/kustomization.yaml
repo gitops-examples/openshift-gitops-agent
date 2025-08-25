@@ -1,0 +1,4 @@
+namespace: cluster-lh6qr-agent
+
+resources:
+- namespace.yaml
