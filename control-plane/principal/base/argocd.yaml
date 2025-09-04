@@ -3,18 +3,18 @@ kind: ArgoCD
 metadata:
   name: argocd
 spec:
+  controller:
+    enabled: false
   argoCDAgent:
     principal:
       allowedNamespaces:
-        - cluster-lh6qr-agent
+        - managed-cluster
       enabled: true
       image: 'quay.io/argoprojlabs/argocd-agent:v0.3.2'
       jwtAllowGenerate: true
       auth: mtls:CN=([^,]+)
-  applicationSet:
-    enabled: false
-  controller:
-    enabled: false
+  sourceNamespaces:
+    - managed-cluster
   grafana:
     enabled: false
   ha:
