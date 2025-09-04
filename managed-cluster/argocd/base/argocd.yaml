@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1beta1
+kind: ArgoCD
+metadata:
+  name: argocd
+spec:
+  server:
+    enabled: false
+  redis:
+    enabled: false
+  repo:
+    enabled: false
+  controller:
+    enabled: true
+  resourceExclusions: |
+    - apiGroups:
+      - tekton.dev
+      clusters:
+      - '*'
+      kinds:
+      - TaskRun
+      - PipelineRun

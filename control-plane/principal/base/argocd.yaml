@@ -5,6 +5,8 @@ metadata:
 spec:
   controller:
     enabled: false
+  applicationSet:
+    enabled: true
   argoCDAgent:
     principal:
       allowedNamespaces:
@@ -15,10 +17,6 @@ spec:
       auth: mtls:CN=([^,]+)
   sourceNamespaces:
     - managed-cluster
-  grafana:
-    enabled: false
-  ha:
-    enabled: false
   rbac:
     defaultPolicy: ""
     policy: |
@@ -41,14 +39,6 @@ spec:
       requests:
         cpu: 250m
         memory: 256Mi
-  resourceExclusions: |
-    - apiGroups:
-      - tekton.dev
-      clusters:
-      - '*'
-      kinds:
-      - TaskRun
-      - PipelineRun
   server:
     resources:
       limits:
