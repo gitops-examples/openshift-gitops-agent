@@ -9,7 +9,7 @@ metadata:
   name: argocd-agent-principal
 spec:
   port:
-    targetPort: 443
+    targetPort: 8443
   to:
     kind: Service
     name: argocd-agent-principal

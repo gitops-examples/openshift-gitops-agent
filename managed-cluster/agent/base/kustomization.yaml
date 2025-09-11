@@ -2,6 +2,7 @@ namespace: argocd
 
 resources:
 - https://github.com/argoproj-labs/argocd-agent/install/kubernetes/agent?ref=release-0.4
+- agent-redis-networkpolicy.yaml
 
 images:
 - name: ghcr.io/argoproj-labs/argocd-agent/argocd-agent
@@ -15,13 +16,16 @@ patches:
         value: managed
       - op: replace
         path: /data/agent.server.address
-        value: <principal-route-dns>
+        value: argocd-agent-principal-argocd.apps.cluster-hwr5v.dynamic.redhatworkshops.io
       - op: replace
         path: /data/agent.namespace
         value: argocd
       - op: replace
         path: /data/agent.creds
         value: "mtls:CN=([^,]+)"
+      - op: replace
+        path: /data/agent.tls.client.insecure
+        value: 'true'
     target:
       kind: ConfigMap
       name: argocd-agent-params
