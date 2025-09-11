@@ -5,12 +5,6 @@ metadata:
 spec:
   server:
     enabled: false
-  redis:
-    enabled: false
-  repo:
-    enabled: false
-  controller:
-    enabled: true
   resourceExclusions: |
     - apiGroups:
       - tekton.dev

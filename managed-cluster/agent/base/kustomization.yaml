@@ -1,0 +1,27 @@
+namespace: argocd
+
+resources:
+- https://github.com/argoproj-labs/argocd-agent/install/kubernetes/agent?ref=release-0.4
+
+images:
+- name: ghcr.io/argoproj-labs/argocd-agent/argocd-agent
+  newName: quay.io/argoprojlabs/argocd-agent
+  newTag: v0.4.0
+
+patches:
+  - patch: |
+      - op: replace
+        path: /data/agent.mode
+        value: managed
+      - op: replace
+        path: /data/agent.server.address
+        value: <principal-route-dns>
+      - op: replace
+        path: /data/agent.namespace
+        value: argocd
+      - op: replace
+        path: /data/agent.creds
+        value: "mtls:CN=([^,]+)"
+    target:
+      kind: ConfigMap
+      name: argocd-agent-params
