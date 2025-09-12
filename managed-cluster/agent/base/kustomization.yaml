@@ -3,6 +3,7 @@ namespace: argocd
 resources:
 - https://github.com/argoproj-labs/argocd-agent/install/kubernetes/agent?ref=release-0.4
 - agent-redis-networkpolicy.yaml
+- application-controller-cluster-admin-role.yaml
 
 images:
 - name: ghcr.io/argoproj-labs/argocd-agent/argocd-agent
