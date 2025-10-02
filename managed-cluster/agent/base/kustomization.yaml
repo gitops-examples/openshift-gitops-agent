@@ -8,7 +8,7 @@ resources:
 images:
 - name: ghcr.io/argoproj-labs/argocd-agent/argocd-agent
   newName: quay.io/argoprojlabs/argocd-agent
-  newTag: v0.4.0
+  newTag: v0.4.1
 
 patches:
   - patch: |
@@ -17,7 +17,7 @@ patches:
         value: managed
       - op: replace
         path: /data/agent.server.address
-        value: argocd-agent-principal-argocd.apps.cluster-hwr5v.dynamic.redhatworkshops.io
+        value: argocd-agent-principal-argocd.apps.$SUBDOMAIN
       - op: replace
         path: /data/agent.namespace
         value: argocd
@@ -25,8 +25,8 @@ patches:
         path: /data/agent.creds
         value: "mtls:CN=([^,]+)"
       - op: replace
-        path: /data/agent.tls.client.insecure
-        value: 'true'
+        path: /data/agent.redis.address
+        value: argocd-redis:6379
     target:
       kind: ConfigMap
       name: argocd-agent-params

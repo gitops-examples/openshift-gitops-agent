@@ -8,13 +8,11 @@ spec:
     namespace: bgd
     name: managed-cluster
   source:
-    path: bgd/base
-    repoURL: https://github.com/gitops-examples/getting-started
+    path: apps/base
+    repoURL: https://github.com/gitops-examples/openshift-gitops-agent
     targetRevision: HEAD
   project: managed-cluster
   syncPolicy:
     automated:
       prune: false
       selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
