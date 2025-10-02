@@ -11,7 +11,7 @@ spec:
       value: "true"
     - name: DISABLE_DEFAULT_ARGOCD_CONSOLELINK
       value: "true"
-  channel: gitops-1.17
+  channel: gitops-1.18
   installPlanApproval: Automatic
   name: openshift-gitops-operator
   source: redhat-operators
