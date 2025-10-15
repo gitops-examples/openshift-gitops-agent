@@ -9,6 +9,7 @@ Note instructions here have not been well tested, more POC level at this point.
 
 * openssl is installed on laptop
 * cert-manager has been installed on your cluster
+* OpenShift GitOps 1.18
 
 ## Installing the Principal
 
@@ -110,4 +111,82 @@ argocd-agent-principal-tls        True    argocd-agent-principal-tls        4m8s
 argocd-agent-resource-proxy-tls   True    argocd-agent-resource-proxy-tls   64s
 ```
 
-###
+### Install Argo CD instance with Principal
+
+Install Argo CD:
+
+```
+oc apply -k control-plane/principal/base
+```
+
+Create redis secret and restart principal deployment to pick up redis secret:
+
+```
+oc create secret generic argocd-redis -n argocd --from-literal=auth="$(oc get secret argocd-redis-initial-password -n argocd -o jsonpath='{.data.admin\.password}' | base64 -d)"
+oc rollout restart deploy/argocd-agent-principal -n argocd
+```
+
+Verify all pods are up and running:
+
+```
+$ oc get pods -n argocd
+NAME                                     READY   STATUS    RESTARTS   AGE
+argocd-agent-principal-54c557cdf-gqt65   1/1     Running   0          4s
+argocd-dex-server-7dc7767f49-l7b8b       1/1     Running   0          5m44s
+argocd-redis-5fd76d459-d4x48             1/1     Running   0          5m45s
+argocd-repo-server-68588cd655-g5jxq      1/1     Running   0          5m45s
+argocd-server-6c4779b85c-mxmcj           1/1     Running   0          5m45s
+```
+
+## Register Agent
+
+To use the Agent on the remote cluster, `managed-clusted` here and in the blog, we need to mint
+a certificate for the Agent to use and formulate a cluster secret.
+
+### Mint certificate
+
+Mint the managed-cluster certificate, note the dnsName used is not important
+but you should use a consistent method. I'm using <cluster-name>.<CA-ROOT-DOMAIN> format:
+
+```
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: managed-cluster
+  namespace: argocd
+spec:
+  secretName: managed-cluster
+  issuerRef:
+    name: argocd-agent-ca
+    kind: Issuer
+  dnsNames:
+  - managed-cluster.ocplab.com
+```
+
+Create the cluster secret, note that you cannot directly use the previously created certificate
+but need to transpose it into the cluster secret.
+
+Extract the fields we need into environment variables:
+
+```
+export MANAGED_CLUSTER_CA=$(kubectl get secret managed-cluster -o jsonpath='{.data.ca\.crt}')
+export MANAGED_CLUSTER_TLS=$(kubectl get secret managed-cluster -o jsonpath='{.data.tls\.crt}')
+export MANAGED_CLUSTER_KEY=$(kubectl get secret managed-cluster -o jsonpath='{.data.tls\.key}')
+```
+
+Create the `cluster-managed-cluster` secret that is needed:
+
+```
+cat << EOF > config
+{
+    "username": "foo",
+    "password": "bar",
+    "tlsClientConfig": {
+        "insecure": false,
+        "certData": "${MANAGED_CLUSTER_TLS}",
+        "keyData": "${MANAGED_CLUSTER_KEY}",
+        "caData": "${MANAGED_CLUSTER_CA}"
+    }
+}
+EOF
+```
