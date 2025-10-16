@@ -222,9 +222,9 @@ Now let's mint the certificate that the Agent will provide to the Principle as p
 
 NOTE: I believe it is possible to mint this certificate on the Agent itself by simply using cert-manager
 with the identical CA secret on the Agent. However IMHO this is not good from a security perspective since
-if any cluster is compromised the CA with its key could be retrieved and a hacker could mint their own certs. General
+if any cluster is compromised the CA with its key could be retrieved and a hacker could mint their own certs. Generally
 the Agents will at times run in less secure locations/networks then the Principle so we want to isolate
-the CA to one spot.
+the CA to one location, the principal.
 
 ```
 apiVersion: cert-manager.io/v1
