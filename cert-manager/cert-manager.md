@@ -150,12 +150,12 @@ argocd-server-6c4779b85c-mxmcj           1/1     Running   0          5m45s
 ## Register Agent
 
 To use the Agent on the remote cluster, named `managed-clusted` here and in the blog, we need to mint
-a certificate for the Agent to use and formulate a cluster secret.
+certificates for the Principal and Agent to use for [Mutual TLS](https://www.cloudflare.com/learning/access-management/what-is-mutual-tls/) and formulate a cluster secret.
 
 ### Mint Agent Certificate for Principal
 
 Mint the managed-cluster certificate that the Principal will provide to the Agent, note the dnsName used is not important
-but you should use a consistent method. I'm using <cluster-name>.<CA-ROOT-DOMAIN> format:
+but you should use a consistent method. I'm using `<cluster-name>.<CA-ROOT-DOMAIN>` format:
 
 ```
 apiVersion: cert-manager.io/v1
@@ -218,7 +218,7 @@ oc label secret cluster-managed-cluster argocd.argoproj.io/secret-type=cluster
 ```
 ### Mint Certificate for Agent
 
-Now let's mint the certificate that the Agent will provide for the Principle as part of the mutual TLS.
+Now let's mint the certificate that the Agent will provide to the Principle as part of the Mutual TLS.
 
 NOTE: I believe it is possible to mint this certificate on the Agent itself by simply using cert-manager
 with the identical CA secret on the Agent. However IMHO this is not good from a security perspective since
