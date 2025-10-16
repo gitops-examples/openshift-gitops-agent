@@ -8,6 +8,7 @@ Note instructions here have not been well tested, more POC level at this point.
 ## Prerequisites
 
 * openssl is installed on laptop
+- jq and yq is installed on laptop
 * cert-manager has been installed on your cluster
 * OpenShift GitOps 1.18
 
@@ -78,6 +79,10 @@ spec:
   issuerRef:
     name: argocd-agent-ca
     kind: Issuer
+  commonName: principal
+  subject:
+    organizationalUnits:
+      - ocplab.com
   dnsNames:
   - argocd-agent-principal-argocd.apps.cluster-csxcn.dynamic.redhatworkshops.io
 ```
@@ -97,6 +102,10 @@ spec:
   issuerRef:
     name: argocd-agent-ca
     kind: Issuer
+  commonName: resource-proxy
+  subject:
+    organizationalUnits:
+      - ocplab.com
   dnsNames:
   - argocd-agent-resource-proxy.argocd.svc.cluster.local
 ```
@@ -143,9 +152,9 @@ argocd-server-6c4779b85c-mxmcj           1/1     Running   0          5m45s
 To use the Agent on the remote cluster, `managed-clusted` here and in the blog, we need to mint
 a certificate for the Agent to use and formulate a cluster secret.
 
-### Mint certificate
+### Mint Agent Certificate for Principal
 
-Mint the managed-cluster certificate, note the dnsName used is not important
+Mint the managed-cluster certificate that the Principal will provide to the Agent, note the dnsName used is not important
 but you should use a consistent method. I'm using <cluster-name>.<CA-ROOT-DOMAIN> format:
 
 ```
@@ -159,6 +168,10 @@ spec:
   issuerRef:
     name: argocd-agent-ca
     kind: Issuer
+  commonName: managed-cluster
+  subject:
+    organizationalUnits:
+      - ocplab.com
   dnsNames:
   - managed-cluster.ocplab.com
 ```
@@ -174,7 +187,8 @@ export MANAGED_CLUSTER_TLS=$(kubectl get secret managed-cluster -o jsonpath='{.d
 export MANAGED_CLUSTER_KEY=$(kubectl get secret managed-cluster -o jsonpath='{.data.tls\.key}')
 ```
 
-Create the `cluster-managed-cluster` secret that is needed:
+To create the `cluster-managed-cluster` secret that is needed we must first create the `config` block
+with the certs:
 
 ```
 cat << EOF > config
@@ -190,3 +204,119 @@ cat << EOF > config
 }
 EOF
 ```
+
+Now create the secret:
+
+```
+oc create secret generic cluster-managed-cluster -n argocd --from-literal=name=managed-cluster --from-literal=server=argocd-agent-resource-proxy.argocd.svc.cluster.local --from-file=config=./config
+```
+
+Then label the secret as a cluster secret:
+
+```
+oc label secret cluster-managed-cluster argocd.argoproj.io/secret-type=cluster
+```
+### Mint Certificate for Agent
+
+Now let's mint the certificate that the Agent will provide for the Principle as part of the mutual TLS.
+
+NOTE: I believe it is possible to mint this certificate on the Agent itself by simply using cert-manager
+with the identical CA secret on the Agent. However IMHO this is not good from a security perspective since
+if any cluster is compromised the CA with its key could be retrieved and a hacker could mint their own certs. General
+the Agents will at times run in less secure locations/networks then the Principle so we want to isolate
+the CA to one spot.
+
+```
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: managed-cluster-agent
+  namespace: argocd
+spec:
+  secretName: managed-cluster-agent
+  issuerRef:
+    name: argocd-agent-ca
+    kind: Issuer
+  commonName: managed-cluster
+  subject:
+    organizationalUnits:
+      - ocplab.com
+  dnsNames:
+  - managed-cluster.ocplab.com
+```
+
+Output the secret to a file as we need to install it on the `managed-cluster`, note
+I'm using the kubectl-neat plugin to get a clean copy of the YAML:
+
+```
+oc get secret managed-cluster-agent -o yaml -n argocd | oc neat > managed-cluster-agent.yaml
+```
+
+We also need a copy of the `argocd-agent-ca` secret for the `managed-cluster` but
+we want it without the key.
+
+```
+oc get secret argocd-agent-ca -o yaml -n argocd | yq 'del(.data.["tls.key"])' -y | oc neat > argocd-agent-ca.yaml
+```
+
+Change the secret type to `Opaque` since a Kubernetes TLS secret requires a key:
+
+```
+yq -i '.type = "Opaque"' ./argocd-agent-ca.yaml -y
+```
+
+## Install the Agent
+
+Login into the remote cluster, i.e. `managed-cluster`, to start installing the Agent.
+
+### Provision the Operator
+
+```
+oc apply -k operator/base
+```
+
+### Provision Argo CD Instance
+
+Once the operator is up and running provision the Argo CD Instance for the Agent:
+
+```
+oc apply -k managed-cluster/argocd/base
+```
+
+### Provision the Agent
+
+Create the Redis secret:
+
+```
+oc create secret generic argocd-redis -n argocd --from-literal=auth="$(oc get secret argocd-redis-initial-password -n argocd -o jsonpath='{.data.admin\.password}' | base64 -d)"
+```
+
+Create the argocd-agent-ca from the secret you exported previously:
+
+```
+oc apply -f <path-to-secret>/argocd-agent-ca.yaml -n argocd
+```
+
+Change the name of the `managed-cluster-agent` secret we exported to `argocd-agent-client-tls`:
+
+```
+yq -i '.metadata.name = "argocd-agent-client-tls"' <path-to-secret>/managed-cluster-agent.yaml -y
+```
+
+Now create the TLS secret for the Agent:
+
+```
+oc apply -f <path-to-secret>/managed-cluster-agent.yaml -n argocd
+```
+
+Provision the Agent however either first modify `managed-cluster/agent/base/kustomizaton` for the Principal endpoint
+or set the principal SUBDOMAIN environment variable. I'm going to follow the blog steps and use the SUBDOMAIN
+environment variable:
+
+```
+
+
+
+```
+
+
