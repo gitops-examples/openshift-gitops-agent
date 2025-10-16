@@ -66,7 +66,7 @@ spec:
 ### Generate TLS certs for principal
 
 Use cert-manager to generate the tls certificates for the Principal starting with `argocd-agent-principal-tls`. Make
-sure you update the `dnsNames` to reflect the URL used to expose the Agent on your system:
+sure you update the `dnsNames` to reflect the URL used to expose the Principal on your system:
 
 ```
 apiVersion: cert-manager.io/v1
@@ -149,7 +149,7 @@ argocd-server-6c4779b85c-mxmcj           1/1     Running   0          5m45s
 
 ## Register Agent
 
-To use the Agent on the remote cluster, `managed-clusted` here and in the blog, we need to mint
+To use the Agent on the remote cluster, named `managed-clusted` here and in the blog, we need to mint
 a certificate for the Agent to use and formulate a cluster secret.
 
 ### Mint Agent Certificate for Principal
