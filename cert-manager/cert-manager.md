@@ -311,12 +311,20 @@ oc apply -f <path-to-secret>/managed-cluster-agent.yaml -n argocd
 
 Provision the Agent however either first modify `managed-cluster/agent/base/kustomizaton` for the Principal endpoint
 or set the principal SUBDOMAIN environment variable. I'm going to follow the blog steps and use the SUBDOMAIN
-environment variable:
+environment variable so change it to match yours:
 
 ```
-
-
-
+export SUBDOMAIN=cluster-csxcn.dynamic.redhatworkshops.io
+kustomize build managed-cluster/agent/base | envsubst | oc apply -f -
 ```
 
+If you have done everything correctly, you should see the `managed-cluster` AppProject copied over to the Agent cluster:
+
+```
+$ oc get appproject
+NAME              AGE
+managed-cluster   16s
+```
+
+At this point you can deploy the test application on the Principal from the blog to validate Applications.
 
