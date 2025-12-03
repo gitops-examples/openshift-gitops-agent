@@ -14,7 +14,7 @@ spec:
       allowedNamespaces:
         - managed-cluster
       enabled: true
-      image: 'quay.io/argoprojlabs/argocd-agent:v0.4.1'
+      image: 'quay.io/argoprojlabs/argocd-agent:v0.5.1'
       jwtAllowGenerate: true
       auth: mtls:CN=([^,]+)
   sourceNamespaces:
